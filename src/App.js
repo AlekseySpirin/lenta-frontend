@@ -176,10 +176,10 @@ const App = ({style}) => {
 		...columns
 	];
 	
-	const showModal = (salesData, record) => { // Добавьте record в параметры функции
+	const showModal = (salesData, record) => {
 		setIsModalVisible(true);
 		setProductName(record.label);
-		setSelectedProduct(record);  // Установите выбранный продукт здесь
+		setSelectedProduct(record);
 		setChartData([
 			...salesData.map((item) => ({
 				...item,
@@ -199,8 +199,7 @@ const App = ({style}) => {
 	const expandedRowRender = (record) => {
 		if (!record.salesData) return null;
 		
-		// we create a map for each date to its corresponding sold and forecast
-		// value
+		// создаем карту для каждой даты с соответствующими ей продажами и прогнозом
 		let salesByDate = {};
 		record.salesData.forEach((sale) => {
 			let date = moment(sale.date, 'YYYY-MM-DD').format('DD.MM.YY');
@@ -210,18 +209,18 @@ const App = ({style}) => {
 			};
 		});
 		
-		// creating the dates for the whole month
+		// создание дат на весь месяц
 		let startDate = moment(record.salesData[0].date);
 		let endDate = moment(record.salesData[record.salesData.length - 1].date);
 		let dateArray = [];
 		
-		// get all dates betweeen start and end date
+		// получить все даты между датой начала и датой окончания
 		while (startDate.isSameOrBefore(endDate)) {
 			dateArray.push(moment(startDate).format("DD.MM.YY"));
 			startDate.add(1, "days");
 		}
 		moment.locale('ru');
-		// map each date to column
+		// сопоставление даты со столбцами
 		let columns = dateArray.map((date) => ({
 			title: date,
 			children: [
@@ -244,7 +243,7 @@ const App = ({style}) => {
 			]
 		}));
 		
-		// create row data
+		// создание данных строки
 		let data = [
 			
 			{
@@ -282,7 +281,7 @@ const App = ({style}) => {
 			if (tcData) combinedChildren.push(...tcData.children);
 		});
 		
-		// А вот тут уже уникальные
+		// А вот тут уже уникальные (*решение проблемы с отображением каскадера и таблицы)
 		combinedChildren = uniqBy(combinedChildren, 'label');
 		
 		const productOptions = generateProductOptions(combinedChildren);
@@ -397,7 +396,7 @@ const App = ({style}) => {
 					<Line {...salesChartConfig(chartData)} />
 					<Table
 						dataSource={filteredServerData}
-						columns={modalColumns} // use modalColumns here
+						columns={modalColumns}
 					/>
 				</Modal>
 			</main>
