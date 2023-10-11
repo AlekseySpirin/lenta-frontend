@@ -1,11 +1,13 @@
 import './App.css';
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect} from 'react';
 import {Button, Cascader, Checkbox, Modal, Select, Table} from 'antd';
 import {uniqBy} from 'lodash';
 import moment from 'moment';
 import 'moment/locale/ru';
 import {LineChartOutlined, ShoppingCartOutlined} from '@ant-design/icons';
 import {Line} from "@ant-design/plots";
+import { useSelector, useDispatch } from 'react-redux';
+import { setSelectedProducts, setProductOptions, setCombinedData, toggleModalVisibility, setProductName, setCheckedBoxes, setChartData, setSelectedProduct } from './features/app/appSlice';
 
 import {serverData} from "./utils/serverData/serverData";
 
@@ -42,10 +44,14 @@ const generateProductOptions = (data) => {
 	return traverseData(data);
 };
 
+console.log(serverData)
+
 const tcOptions = serverData.map((item) => ({
 	label: item.label,
 	value: item.label,
 }));
+
+console.log(tcOptions)
 
 const calculateSolds = (data, tcCategory = '') => {
 	return data.map((item) => {
@@ -112,14 +118,9 @@ const columns = [
 ];
 
 const App = ({style}) => {
-	const [selectedProducts, setSelectedProducts] = useState([]);
-	const [productOptions, setProductOptions] = useState([]);
-	const [combinedData, setCombinedData] = useState([]);
-	const [isModalVisible, setIsModalVisible] = useState(false);
-	const [productName, setProductName] = useState("");
-	const [checkedBoxes, setCheckedBoxes] = useState([]);
-	const [chartData, setChartData] = useState([]);
-	const [selectedProduct, setSelectedProduct] = useState(null);
+	const dispatch = useDispatch();
+	
+	const { selectedProducts, productOptions, combinedData, isModalVisible, productName, checkedBoxes, chartData, selectedProduct } = useSelector(state => state.app);
 	
 	const prepareChartData = useCallback((checkedBoxes) => {
 		const selectedData = checkedBoxes.flatMap(item => item.salesData || []);
@@ -139,25 +140,25 @@ const App = ({style}) => {
 	useEffect(() => {
 		if (checkedBoxes.length) {
 			const updatedChartData = prepareChartData(checkedBoxes);
-			setChartData(updatedChartData);
+			dispatch(setChartData(updatedChartData)) ;
 		}
 	}, [checkedBoxes, prepareChartData]);
 	
 	useEffect(() => {
 		if (isModalVisible && selectedProduct) {
-			setCheckedBoxes([selectedProduct]);
+			dispatch(setCheckedBoxes([selectedProduct])) ;
 		}
 	}, [isModalVisible, selectedProduct]);
 	
 	const handleCheckboxChange = record => {
 		const index = checkedBoxes.findIndex(item => item.key === record.key);
 		if (index !== -1) {
-			setCheckedBoxes([
+			dispatch(setCheckedBoxes([
 				...checkedBoxes.slice(0, index),
 				...checkedBoxes.slice(index + 1)
-			]);
+			])) ;
 		} else {
-			setCheckedBoxes([...checkedBoxes, record]);
+			dispatch(setCheckedBoxes([...checkedBoxes, record])) ;
 		}
 	};
 	
@@ -177,10 +178,10 @@ const App = ({style}) => {
 	];
 	
 	const showModal = (salesData, record) => {
-		setIsModalVisible(true);
-		setProductName(record.label);
-		setSelectedProduct(record);
-		setChartData([
+		dispatch(toggleModalVisibility());
+		dispatch(setProductName(record.label));
+		dispatch(setSelectedProduct(record));
+		dispatch(setChartData([
 			...salesData.map((item) => ({
 				...item,
 				type: 'Продажи',
@@ -190,10 +191,11 @@ const App = ({style}) => {
 				sold: item.forecast,
 				type: 'Прогноз',
 			})),
-		]);
+		]));
 	};
+	
 	const handleCancel = () => {
-		setIsModalVisible(false);
+		dispatch(toggleModalVisibility());
 	};
 	
 	const expandedRowRender = (record) => {
@@ -285,12 +287,12 @@ const App = ({style}) => {
 		combinedChildren = uniqBy(combinedChildren, 'label');
 		
 		const productOptions = generateProductOptions(combinedChildren);
-		setProductOptions(productOptions);
+		dispatch(setProductOptions(productOptions));
 		
 		const newData = selectedTcData.flatMap((tcData) =>
 			calculateSolds(tcData ? [tcData] : [])
 		);
-		setCombinedData(newData);
+		dispatch(setCombinedData(newData));
 	};
 	
 	const onProductsChange = (value, selectedOptions) => {
@@ -304,7 +306,7 @@ const App = ({style}) => {
 			selectedLabels.push(path);
 		}
 		
-		setSelectedProducts(selectedLabels);
+		dispatch(setSelectedProducts(selectedLabels));
 	};
 	
 	const getAllNestedChildren = (element) => {
